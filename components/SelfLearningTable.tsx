@@ -25,6 +25,36 @@ const CHECKLIST_STYLES = [
   '⬜', '✅', '☑️', '✓', '❌', '✗', '⭕', '🔘', '🟩', '🔴'
 ];
 
+const getCleanEditorHtml = (html: string): string => {
+  if (!html) return '';
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  const spacers = temp.querySelectorAll('.table-spacer-click-zone');
+  spacers.forEach(s => s.remove());
+  return temp.innerHTML;
+};
+
+const ensureTableSpacers = (element: HTMLDivElement | null) => {
+  if (!element) return;
+  const tables = element.querySelectorAll('table');
+  tables.forEach(table => {
+    let next = table.nextSibling as HTMLElement | null;
+    while (next && next.nodeType === Node.TEXT_NODE && !next.textContent?.trim()) {
+      next = next.nextSibling as HTMLElement | null;
+    }
+    if (!next || !next.classList || !next.classList.contains('table-spacer-click-zone')) {
+      const spacer = document.createElement('div');
+      spacer.className = 'table-spacer-click-zone';
+      spacer.setAttribute('contenteditable', 'false');
+      if (table.nextSibling) {
+        table.parentNode?.insertBefore(spacer, table.nextSibling);
+      } else {
+        table.parentNode?.appendChild(spacer);
+      }
+    }
+  });
+};
+
 interface SelfLearningTableProps {
   data: AppData;
   onUpdate: (data: AppData | ((prev: AppData) => AppData)) => void;
@@ -52,6 +82,9 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
   const [showTableToolsMenu, setShowTableToolsMenu] = useState(false);
   const [showPageOptions, setShowPageOptions] = useState(false);
   const [showListStyleMenu, setShowListStyleMenu] = useState<'bullet' | 'number' | 'check' | null>(null);
+  const [hoveredTable, setHoveredTable] = useState<HTMLTableElement | null>(null);
+  const [plusButtonPos, setPlusButtonPos] = useState<{ top: number, left: number } | null>(null);
+  const plusButtonTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toggleDropdown = (menuName: 'export' | 'tableTools' | 'more' | 'moreTools' | 'pageOptions') => {
     setShowExportMenu(menuName === 'export' ? !showExportMenu : false);
@@ -455,13 +488,15 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
   const inputTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleEditorInput = (e: React.FormEvent<HTMLDivElement>) => {
+    ensureTableSpacers(editorRef.current);
     if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
     inputTimeoutRef.current = setTimeout(() => {
       if (editorRef.current && selectedTopic) {
         // Only trigger update if the content has actually changed to avoid unnecessary saves
         const currentHtml = editorRef.current.innerHTML;
-        if (currentHtml !== selectedTopic.content) {
-          updateTopic(selectedTopic.id, { content: currentHtml });
+        const cleanHtml = getCleanEditorHtml(currentHtml);
+        if (cleanHtml !== selectedTopic.content) {
+          updateTopic(selectedTopic.id, { content: cleanHtml });
         }
       }
     }, 500);
@@ -1973,11 +2008,15 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
   };
 
   const updateTopic = (id: string, updates: Partial<DPSSTopic>) => {
+    const cleanUpdates = { ...updates };
+    if (typeof cleanUpdates.content === 'string') {
+      cleanUpdates.content = getCleanEditorHtml(cleanUpdates.content);
+    }
     const updateItems = (items: DPSSTopic[]): DPSSTopic[] => {
       if (!Array.isArray(items)) return items;
       return items.map(item => {
         if (!item) return item;
-        if (item.id === id) return { ...item, ...updates };
+        if (item.id === id) return { ...item, ...cleanUpdates };
         if (item.children) return { ...item, children: updateItems(item.children as any[]) };
         return item;
       });
@@ -2911,6 +2950,30 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
   const handleEditorClick = (e: React.MouseEvent) => {
     checkActiveTableCell();
     const target = e.target as HTMLElement;
+
+    if (target.classList?.contains('table-spacer-click-zone')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      target.parentNode?.insertBefore(p, target);
+      
+      const selection = window.getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.setStart(p, 0);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        p.focus();
+      }
+      
+      if (editorRef.current && selectedTopic) {
+        ensureTableSpacers(editorRef.current);
+        updateTopic(selectedTopic.id, { content: getCleanEditorHtml(editorRef.current.innerHTML) });
+      }
+      return;
+    }
     
     // Normalize focus if clicking on the container but not a child
     if (target === editorRef.current) {
@@ -3226,6 +3289,74 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
         }
       });
       setActiveTableCell(null);
+    }
+
+    if (editorRef.current && selectedTopic) {
+      updateTopic(selectedTopic.id, { content: editorRef.current.innerHTML });
+    }
+  };
+
+  const toggleColumnSmartCheck = () => {
+    if (!activeTableCell) return;
+    const cell = activeTableCell;
+    const row = cell.parentElement as HTMLTableRowElement;
+    const table = row?.closest('table');
+    if (!table) return;
+
+    const cellIdx = Array.from(row.cells).indexOf(cell);
+    if (cellIdx === -1) return;
+
+    // Check if any body cell in this column is already a smart-check-cell
+    let anySmart = false;
+    Array.from(table.rows).forEach((r, idx) => {
+      if (idx === 0) return; // skip header
+      const c = r.cells[cellIdx];
+      if (c && c.classList.contains('smart-check-cell')) {
+        anySmart = true;
+      }
+    });
+
+    // Toggle column-wide
+    Array.from(table.rows).forEach((r, idx) => {
+      if (idx === 0) return; // keep header unchanged
+      const c = r.cells[cellIdx];
+      if (c) {
+        if (anySmart) {
+          c.classList.remove('smart-check-cell');
+          c.style.color = '';
+          c.style.padding = '';
+          c.style.fontSize = '';
+        } else {
+          c.classList.add('smart-check-cell');
+          const txt = c.innerText.trim();
+          if (txt !== '✅' && txt !== '❌') {
+            c.innerText = '✅';
+            c.style.color = '#10b981';
+          }
+        }
+      }
+    });
+
+    if (editorRef.current && selectedTopic) {
+      updateTopic(selectedTopic.id, { content: editorRef.current.innerHTML });
+    }
+  };
+
+  const toggleCellSmartCheck = () => {
+    if (!activeTableCell) return;
+    const cell = activeTableCell;
+    if (cell.classList.contains('smart-check-cell')) {
+      cell.classList.remove('smart-check-cell');
+      cell.style.color = '';
+      cell.style.padding = '';
+      cell.style.fontSize = '';
+    } else {
+      cell.classList.add('smart-check-cell');
+      const txt = cell.innerText.trim();
+      if (txt !== '✅' && txt !== '❌') {
+        cell.innerText = '✅';
+        cell.style.color = '#10b981';
+      }
     }
 
     if (editorRef.current && selectedTopic) {
@@ -3721,6 +3852,32 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
         cell.style.cursor = 'col-resize';
       } else {
         cell.style.cursor = '';
+      }
+    }
+
+    // Detect hovered table for the floating '+' insertion button
+    const table = target.closest('table') as HTMLTableElement | null;
+    if (table && editorRef.current) {
+      if (plusButtonTimeoutRef.current) {
+        clearTimeout(plusButtonTimeoutRef.current);
+        plusButtonTimeoutRef.current = null;
+      }
+      setHoveredTable(table);
+      const tableRect = table.getBoundingClientRect();
+      const container = editorRef.current.closest('.editor-container') || editorRef.current.parentElement;
+      const containerRect = container?.getBoundingClientRect();
+      if (containerRect) {
+        setPlusButtonPos({
+          top: tableRect.bottom - containerRect.top + (container?.scrollTop || 0),
+          left: tableRect.left - containerRect.left + (tableRect.width / 2) - 14,
+        });
+      }
+    } else {
+      if (!plusButtonTimeoutRef.current) {
+        plusButtonTimeoutRef.current = setTimeout(() => {
+          setHoveredTable(null);
+          setPlusButtonPos(null);
+        }, 800);
       }
     }
   };
@@ -4574,6 +4731,7 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
       if (editorRef.current.innerHTML !== content) {
         if (document.activeElement !== editorRef.current) {
           editorRef.current.innerHTML = content;
+          ensureTableSpacers(editorRef.current);
         }
       }
     }
@@ -5442,6 +5600,24 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
                                   >
                                     <Trash2 size={12} className="text-red-500 rotate-90" />
                                     Del Col
+                                  </button>
+                                </div>
+                                <div className="h-px bg-slate-100 my-0.5" />
+                                <div className="px-2 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider text-left">Smart-Check Toggle</div>
+                                <div className="flex flex-col gap-1 col-span-2">
+                                  <button 
+                                    onClick={() => { toggleColumnSmartCheck(); setShowTableToolsMenu(false); }}
+                                    className="flex items-center gap-1.5 p-1.5 hover:bg-emerald-50 text-emerald-700 rounded-xl transition-colors font-bold text-xs text-left w-full"
+                                  >
+                                    <CheckSquare size={12} className="text-emerald-500 shrink-0" />
+                                    Smart Check Column
+                                  </button>
+                                  <button 
+                                    onClick={() => { toggleCellSmartCheck(); setShowTableToolsMenu(false); }}
+                                    className="flex items-center gap-1.5 p-1.5 hover:bg-emerald-50 text-emerald-700 rounded-xl transition-colors font-bold text-xs text-left w-full"
+                                  >
+                                    <Check size={12} className="text-emerald-500 shrink-0" />
+                                    Smart Check Cell
                                   </button>
                                 </div>
                               </>
@@ -6606,6 +6782,58 @@ export const SelfLearningTable: React.FC<SelfLearningTableProps> = ({ data, onUp
                         padding: '0.2in 0.2in 0.3in 0.2in'
                       }}
                   ></div>
+
+                  {plusButtonPos && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (hoveredTable && editorRef.current) {
+                          const nextNode = hoveredTable.nextSibling;
+                          const p = document.createElement('p');
+                          p.innerHTML = '<br>';
+                          if (nextNode) {
+                            hoveredTable.parentNode?.insertBefore(p, nextNode);
+                          } else {
+                            hoveredTable.parentNode?.appendChild(p);
+                          }
+                          const selection = window.getSelection();
+                          if (selection) {
+                            const range = document.createRange();
+                            range.setStart(p, 0);
+                            range.collapse(true);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                            p.focus();
+                          }
+                          ensureTableSpacers(editorRef.current);
+                          updateTopic(selectedTopic.id, { content: getCleanEditorHtml(editorRef.current.innerHTML) });
+                          setHoveredTable(null);
+                          setPlusButtonPos(null);
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        if (plusButtonTimeoutRef.current) {
+                          clearTimeout(plusButtonTimeoutRef.current);
+                          plusButtonTimeoutRef.current = null;
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredTable(null);
+                        setPlusButtonPos(null);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: `${plusButtonPos.top}px`,
+                        left: `${plusButtonPos.left}px`,
+                      }}
+                      className="z-[99] flex items-center justify-center w-7 h-7 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg border border-white transition-transform duration-200 hover:scale-110 active:scale-95 cursor-pointer"
+                      title="Insert paragraph below table"
+                    >
+                      <Plus size={14} className="stroke-[3]" />
+                    </button>
+                  )}
                   </div>
                 </div>
 

@@ -420,20 +420,21 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
       </div>
 
       <div className="flex-1 bg-white/[0.01] backdrop-blur-3xl rounded-[40px] shadow-2xl border border-white/10 overflow-hidden flex flex-col">
-        <div className="overflow-auto flex-1 custom-scrollbar overflow-x-auto" style={{ padding: '0.2in 0.2in 0.3in 0.2in' }}>
+        <div className="overflow-auto flex-1 custom-scrollbar overflow-x-auto mobile-a4-wrapper" style={{ padding: '0.2in 0.2in 0.3in 0.2in' }}>
           {/* Main View Area */}
           {layoutMode === 'Table' ? (
-            <table className="w-full border-collapse table-auto min-w-[800px]">
-              <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-xl">
+            <div className="a4-container shadow-none min-h-full">
+              <table className="w-full border-collapse table-auto">
+                <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-xl">
                 <tr className="border-b border-white/20">
                   <th className="px-2 h-14 text-[10px] font-black text-slate-900 uppercase tracking-widest w-12">#</th>
-                  <th className="text-left px-4 text-[10px] font-black text-slate-900 uppercase tracking-widest pt-5 w-[35%] min-w-[200px] max-w-[450px]">
+                  <th className="text-left px-4 text-[10px] font-black text-slate-900 uppercase tracking-widest pt-5 min-w-[220px]">
                     Task / Item
                   </th>
-                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[120px] w-[15%]">Deadline</th>
-                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[100px] w-[12%]">Priority</th>
-                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[100px] w-[12%]">Recurring</th>
-                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[120px] w-[15%]">Status</th>
+                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[120px] w-32">Deadline</th>
+                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[100px] w-28">Priority</th>
+                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[100px] w-28">Recurring</th>
+                  <th className="px-4 text-center text-[10px] font-black text-slate-900 uppercase tracking-widest min-w-[120px] w-32">Status</th>
                   <th className="w-16 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Del</th>
                 </tr>
               </thead>
@@ -601,6 +602,7 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
                   })}
               </tbody>
             </table>
+          </div>
           ) : (
             /* Board View - Column Layout */
             <div className="flex gap-8 min-w-max pb-10 px-4">

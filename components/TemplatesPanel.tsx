@@ -122,7 +122,7 @@ const presetTemplates: Template[] = [
     <thead>
       <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
         <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #64748b; font-size: 10px; width: 50px;">No.</th>
-        <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #64748b; font-size: 10px;">Strategic Task</th>
+        <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #64748b; font-size: 10px; min-width: 150px;">Strategic Task</th>
         <th style="padding: 12px; text-align: center; font-weight: 800; text-transform: uppercase; color: #64748b; font-size: 10px; width: 100px;">Priority</th>
         <th style="padding: 12px; text-align: center; font-weight: 800; text-transform: uppercase; color: #64748b; font-size: 10px; width: 120px;">Status</th>
       </tr>
@@ -162,8 +162,8 @@ const presetTemplates: Template[] = [
     <thead>
       <tr style="background-color: #f0f9ff; border-bottom: 2px solid #bae6fd;">
         <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #0369a1; font-size: 10px; width: 80px;">Type</th>
-        <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #0369a1; font-size: 10px;">Resource Name</th>
-        <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #0369a1; font-size: 10px;">Category</th>
+        <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #0369a1; font-size: 10px; min-width: 150px;">Resource Name</th>
+        <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #0369a1; font-size: 10px; min-width: 100px;">Category</th>
         <th style="padding: 12px; text-align: left; font-weight: 800; text-transform: uppercase; color: #0369a1; font-size: 10px; width: 100px;">Action</th>
       </tr>
     </thead>
@@ -254,7 +254,7 @@ const presetTemplates: Template[] = [
     <thead>
       <tr style="background-color: #fefce8; border-bottom: 2px solid #fde68a;">
         <th style="padding: 10px; text-align: left; font-weight: 800; text-transform: uppercase; color: #a16207; font-size: 10px; width: 50px;">Day</th>
-        <th style="padding: 10px; text-align: left; font-weight: 800; text-transform: uppercase; color: #a16207; font-size: 10px;">Expense/Income Item</th>
+        <th style="padding: 10px; text-align: left; font-weight: 800; text-transform: uppercase; color: #a16207; font-size: 10px; min-width: 180px;">Expense/Income Item</th>
         <th style="padding: 10px; text-align: right; font-weight: 800; text-transform: uppercase; color: #a16207; font-size: 10px; width: 100px;">Amount</th>
         <th style="padding: 10px; text-align: center; font-weight: 800; text-transform: uppercase; color: #a16207; font-size: 10px; width: 80px;">Paid?</th>
       </tr>
@@ -543,7 +543,10 @@ export const TemplatesPanel: React.FC<TemplatesPanelProps> = ({
   };
 
   // HTML Snippet Insertion Handler
-  const insertSpecialBlock = (type: 'synthesis' | 'brainstorm' | 'qa' | 'proscons' | 'threecols' | 'fourcols' | 'taskmatrix' | 'resourcelibrary', colorObj: typeof insertionColors[0]) => {
+  const insertSpecialBlock = (
+    type: 'synthesis' | 'brainstorm' | 'qa' | 'proscons' | 'threecols' | 'fourcols' | 'taskmatrix' | 'resourcelibrary' | 'resources' | 'feedback' | 'dailylearning' | 'selflearning', 
+    colorObj: typeof insertionColors[0]
+  ) => {
     const { hex, bg, border, text, name, dot } = colorObj;
     let snippet = '';
 
@@ -680,7 +683,7 @@ export const TemplatesPanel: React.FC<TemplatesPanelProps> = ({
       </tr>
     </tbody>
   </table>
-</div><p></p>`;
+ </div><p></p>`;
     } else if (type === 'resourcelibrary') {
       snippet = `<div class="table-scroll-container" style="overflow-x: auto; max-width: 100%; border-radius: 12px; margin: 16px 0; border: 1px solid ${border};">
   <table class="card-stack" style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -701,7 +704,97 @@ export const TemplatesPanel: React.FC<TemplatesPanelProps> = ({
       </tr>
     </tbody>
   </table>
-</div><p></p>`;
+ </div><p></p>`;
+    } else if (type === 'resources') {
+      snippet = `<div class="resources-card" style="margin: 14px 0; padding: 14px; border: 1.5px solid ${border}; background-color: ${bg}; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);">
+  <h4 style="margin: 0 0 8px 0; color: ${text}; font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+    📚 STUDY RESOURCES & REFERENCE ARCHIVE
+  </h4>
+  <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+    <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid ${border}; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong style="font-size: 11px; color: #1e293b; display: block;">📖 Core Literature Database</strong>
+        <p style="margin: 0; font-size: 10px; color: #64748b;">Primary textbook readings, research journals, and syllabus guides</p>
+      </div>
+      <span style="font-size: 10px; font-weight: 800; color: ${text}; background: ${bg}; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">Required</span>
+    </div>
+    <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid ${border}; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong style="font-size: 11px; color: #1e293b; display: block;">🖥️ Interactive Virtual Library</strong>
+        <p style="margin: 0; font-size: 10px; color: #64748b;">Lecture videos, visualization tools, and shared notes archives</p>
+      </div>
+      <span style="font-size: 10px; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">Optional</span>
+    </div>
+  </div>
+ </div><p></p>`;
+    } else if (type === 'feedback') {
+      snippet = `<div class="feedback-metric-card" style="margin: 14px 0; padding: 14px; border: 1px solid ${border}; background-color: #ffffff; border-radius: 12px; border-left: 5px solid ${hex}; shadow: 0 4px 6px -1px rgba(0,0,0,0.01);">
+  <h4 style="margin: 0 0 10px 0; color: ${text}; font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+    🎯 ACADEMIC PERFORMANCE FEEDBACK METRIC
+  </h4>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;">
+    <div style="background: ${bg}; padding: 10px; border-radius: 8px; border: 1px solid ${border}; text-align: center;">
+      <span style="font-size: 18px; display: block; margin-bottom: 2px;">🧠</span>
+      <strong style="font-size: 10px; color: #475569; text-transform: uppercase; display: block;">Comprehension</strong>
+      <div style="font-size: 14px; font-weight: 900; color: ${text}; margin-top: 2px;">9.2 / 10</div>
+    </div>
+    <div style="background: ${bg}; padding: 10px; border-radius: 8px; border: 1px solid ${border}; text-align: center;">
+      <span style="font-size: 18px; display: block; margin-bottom: 2px;">⚡</span>
+      <strong style="font-size: 10px; color: #475569; text-transform: uppercase; display: block;">Focus Intensity</strong>
+      <div style="font-size: 14px; font-weight: 900; color: ${text}; margin-top: 2px;">8.8 / 10</div>
+    </div>
+    <div style="background: ${bg}; padding: 10px; border-radius: 8px; border: 1px solid ${border}; text-align: center;">
+      <span style="font-size: 18px; display: block; margin-bottom: 2px;">🔥</span>
+      <strong style="font-size: 10px; color: #475569; text-transform: uppercase; display: block;">Daily Streak</strong>
+      <div style="font-size: 14px; font-weight: 900; color: ${text}; margin-top: 2px;">12 Days</div>
+    </div>
+  </div>
+  <div style="margin-top: 10px; padding: 8px; background: ${bg}; border-radius: 6px; font-size: 10px; color: #475569; font-weight: 500;">
+    💡 <strong>Growth Diagnostic:</strong> Focus intensity remained strong; review core active-recall literature to elevate comprehension of complex sub-topics.
+  </div>
+ </div><p></p>`;
+    } else if (type === 'dailylearning') {
+      snippet = `<div class="daily-learning-card" style="margin: 14px 0; padding: 14px; border: 1px solid ${border}; background-color: ${bg}; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);">
+  <h4 style="margin: 0 0 10px 0; color: ${text}; font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+    📅 DAILY LEARNING & ACTION RETROSPECTIVE
+  </h4>
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="background: #ffffff; padding: 8px; border-radius: 6px; border: 1px solid ${border};">
+      <strong style="font-size: 10px; color: ${text}; text-transform: uppercase; display: block; margin-bottom: 3px;">☀️ Today's Major Academic Takeaway:</strong>
+      <p style="margin: 0; font-size: 10.5px; color: #475569; font-weight: 500;">[Synthesize the single most important concept mastered today in 1-2 key sentences]</p>
+    </div>
+    <div style="background: #ffffff; padding: 8px; border-radius: 6px; border: 1px solid ${border};">
+      <strong style="font-size: 10px; color: ${text}; text-transform: uppercase; display: block; margin-bottom: 3px;">🛠️ Immediate Real-World Application:</strong>
+      <p style="margin: 0; font-size: 10.5px; color: #475569; font-weight: 500;">[How does this knowledge translate into direct clinical, financial, or academic breakthroughs?]</p>
+    </div>
+    <div style="background: #ffffff; padding: 8px; border-radius: 6px; border: 1px solid ${border};">
+      <strong style="font-size: 10px; color: ${text}; text-transform: uppercase; display: block; margin-bottom: 3px;">⚠️ Friction Points & Strategy Adjustments:</strong>
+      <p style="margin: 0; font-size: 10.5px; color: #475569; font-weight: 500;">[What was difficult? What adjustments will you make tomorrow to maintain high flow state?]</p>
+    </div>
+  </div>
+ </div><p></p>`;
+    } else if (type === 'selflearning') {
+      snippet = `<div class="self-learning-card" style="margin: 14px 0; padding: 14px; border: 1.5px dashed ${hex}; background-color: #ffffff; border-radius: 12px;">
+  <h4 style="margin: 0 0 10px 0; color: ${text}; font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+    🧠 STRUCTURED SELF-LEARNING & ACTIVE RECALL NOTES
+  </h4>
+  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-top: 8px;">
+    <div style="background: ${bg}; padding: 10px; border-radius: 8px; border: 1px solid ${border};">
+      <strong style="font-size: 10px; color: ${text}; text-transform: uppercase; display: block; margin-bottom: 6px;">🔑 Key Terminology</strong>
+      <ul style="margin: 0; padding-left: 12px; font-size: 9.5px; color: #334155; line-height: 1.4;">
+        <li><strong>Concept 1:</strong> [Definition]</li>
+        <li><strong>Concept 2:</strong> [Definition]</li>
+        <li><strong>Concept 3:</strong> [Definition]</li>
+      </ul>
+    </div>
+    <div style="background: ${bg}; padding: 10px; border-radius: 8px; border: 1px solid ${border};">
+      <strong style="font-size: 10px; color: ${text}; text-transform: uppercase; display: block; margin-bottom: 6px;">✍️ Deep Elaborative Exposition</strong>
+      <p style="margin: 0; font-size: 10px; color: #334155; line-height: 1.4;">
+        [Write comprehensive research notes, formulas, logical proofs, or study summaries here. Use this area to explain concepts to yourself in your own words to verify mental models.]
+      </p>
+    </div>
+  </div>
+ </div><p></p>`;
     }
 
     setFormContent(prev => prev + snippet);
@@ -1241,6 +1334,86 @@ export const TemplatesPanel: React.FC<TemplatesPanelProps> = ({
                         title={`Q&A block in ${colorObj.name}`}
                       >
                         <span className="text-[14px] leading-none mb-0.5 text-white">❓</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* New: Insert Resources */}
+                <div className="space-y-1.5 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                  <span className="text-[9px] font-black text-slate-700 uppercase flex items-center gap-1">
+                    <BookOpen size={13} className="text-emerald-500" /> Insert Resources
+                  </span>
+                  <div className="grid grid-cols-5 gap-1.5 pt-1">
+                    {insertionColors.map((colorObj, idx) => (
+                      <button 
+                        key={idx}
+                        type="button"
+                        onClick={() => insertSpecialBlock('resources', colorObj)}
+                        className={`w-7 h-7 rounded-full border border-slate-100 flex items-center justify-center hover:scale-115 active:scale-90 transition-all ${colorObj.dot} bg-opacity-90 shadow-sm`}
+                        title={`Resources block in ${colorObj.name}`}
+                      >
+                        <span className="text-[14px] leading-none mb-0.5 text-white">📚</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* New: Use Feedback Metric */}
+                <div className="space-y-1.5 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                  <span className="text-[9px] font-black text-slate-700 uppercase flex items-center gap-1">
+                    <Activity size={13} className="text-amber-500" /> Use Feedback Metric
+                  </span>
+                  <div className="grid grid-cols-5 gap-1.5 pt-1">
+                    {insertionColors.map((colorObj, idx) => (
+                      <button 
+                        key={idx}
+                        type="button"
+                        onClick={() => insertSpecialBlock('feedback', colorObj)}
+                        className={`w-7 h-7 rounded-full border border-slate-100 flex items-center justify-center hover:scale-115 active:scale-90 transition-all ${colorObj.dot} bg-opacity-90 shadow-sm`}
+                        title={`Feedback Metric block in ${colorObj.name}`}
+                      >
+                        <span className="text-[14px] leading-none mb-0.5 text-white">🎯</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* New: Daily Learning */}
+                <div className="space-y-1.5 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                  <span className="text-[9px] font-black text-slate-700 uppercase flex items-center gap-1">
+                    <Zap size={13} className="text-orange-500" /> Daily Learning
+                  </span>
+                  <div className="grid grid-cols-5 gap-1.5 pt-1">
+                    {insertionColors.map((colorObj, idx) => (
+                      <button 
+                        key={idx}
+                        type="button"
+                        onClick={() => insertSpecialBlock('dailylearning', colorObj)}
+                        className={`w-7 h-7 rounded-full border border-slate-100 flex items-center justify-center hover:scale-115 active:scale-90 transition-all ${colorObj.dot} bg-opacity-90 shadow-sm`}
+                        title={`Daily Learning block in ${colorObj.name}`}
+                      >
+                        <span className="text-[14px] leading-none mb-0.5 text-white">📅</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* New: Self-Learning and Note-Taking */}
+                <div className="space-y-1.5 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                  <span className="text-[9px] font-black text-slate-700 uppercase flex items-center gap-1">
+                    <FileText size={13} className="text-cyan-500" /> Self-learning and note-taking
+                  </span>
+                  <div className="grid grid-cols-5 gap-1.5 pt-1">
+                    {insertionColors.map((colorObj, idx) => (
+                      <button 
+                        key={idx}
+                        type="button"
+                        onClick={() => insertSpecialBlock('selflearning', colorObj)}
+                        className={`w-7 h-7 rounded-full border border-slate-100 flex items-center justify-center hover:scale-115 active:scale-90 transition-all ${colorObj.dot} bg-opacity-90 shadow-sm`}
+                        title={`Self-Learning Notes block in ${colorObj.name}`}
+                      >
+                        <span className="text-[14px] leading-none mb-0.5 text-white">🧠</span>
                       </button>
                     ))}
                   </div>
